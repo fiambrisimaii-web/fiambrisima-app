@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiambrisima II - Pedidos de Viandas</title>
+    <!-- Google Fonts: Montserrat (Text) and Georgia is web-safe (Titles) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- App Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i class="fa-solid fa-store logo-icon"></i>
+                <div class="logo-text">
+                    <h1>Fiambrisima<span> II</span></h1>
+                    <p>Viandas & Comidas Caseras</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Wrapper -->
+        <main class="app-content">
+            <!-- 1. Customer Information Card (Pickup Only) -->
+            <section class="section-card customer-section" id="customer-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-user-circle header-icon"></i>
+                    <h2>Tus Datos de Contacto</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="client-name">Nombre y Apellido</label>
+                        <input type="text" id="client-name" placeholder="Ej. Juan Pérez" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-phone">Teléfono (WhatsApp)</label>
+                        <input type="tel" id="client-phone" placeholder="Ej. 11 1234-5678" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <div class="static-delivery-badge">
+                            <i class="fa-solid fa-bag-shopping"></i>
+                            <div class="badge-text">
+                                <strong>Modalidad: Retiro en Local</strong>
+                                <span>Pasas a buscar tus viandas calentitas por nuestro local el día seleccionado.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Date Selection Card (Month & Week Selector) -->
+            <section class="section-card calendar-section">
+                <div class="card-header">
+                    <i class="fa-solid fa-calendar-days header-icon"></i>
+                    <h2>Período del Pedido</h2>
+                </div>
+                <div class="calendar-selectors">
+                    <div class="form-group">
+                        <label for="select-month">Seleccionar Mes</label>
+                        <select id="select-month">
+                            <!-- Dynamic Months -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="select-week">Seleccionar Semana</label>
+                        <select id="select-week">
+                            <!-- Dynamic Weeks -->
+                        </select>
+                    </div>
+                </div>
+                <div class="info-banner" id="week-dates-banner">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span id="week-range-text">Cargando fechas de la semana...</span>
+                </div>
+            </section>
+
+            <!-- 3. Day Tab Navigation (Lunes a Viernes) -->
+            <div class="day-tabs-wrapper">
+                <nav class="day-tabs" id="day-tabs-container">
+                    <!-- Dynamic tabs rendered by JS (Monday to Friday only) -->
+                </nav>
+            </div>
+
+            <!-- Lock Banner (Hidden by default, shown when selected day is locked) -->
+            <div class="lock-banner hidden" id="day-lock-banner">
+                <i class="fa-solid fa-lock"></i>
+                <div class="lock-banner-text">
+                    <strong id="lock-banner-title">Pedidos Cerrados para este día</strong>
+                    <span id="lock-banner-desc">El límite de carga fue a las 23:59 del día anterior. Puedes visualizar tu pedido, pero no editar cantidades.</span>
+                </div>
+            </div>
+
+            <!-- 4. Search and Categories Filter -->
+            <div class="filter-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Buscar comida...">
+                    <button class="clear-search hidden" id="clear-search-btn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="category-pills" id="category-pills-container">
+                    <!-- Dynamic category pills -->
+                </div>
+            </div>
+
+            <!-- 5. Menu items display grid -->
+            <section class="menu-grid" id="menu-items-grid">
+                <!-- Dynamic cards rendered by JS -->
+            </section>
+        </main>
+
+        <!-- Floating Cart Bar (Sticky Bottom) -->
+        <div class="cart-floating-bar hidden" id="cart-floating-bar">
+            <div class="cart-summary-info">
+                <div class="cart-icon-wrapper">
+                    <i class="fa-solid fa-basket-shopping"></i>
+                    <span class="cart-badge" id="cart-total-badge">0</span>
+                </div>
+                <div class="cart-price-details">
+                    <span class="total-label">Total Pedido</span>
+                    <span class="total-price" id="cart-total-price">$0</span>
+                </div>
+            </div>
+            <button class="btn-checkout" id="btn-open-checkout" onclick="openCheckoutModal()">
+                Revisar Pedido <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- Checkout & Order Summary Modal (Slide Up) -->
+        <div class="modal-overlay hidden" id="checkout-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-clipboard-list"></i> Detalle de tu Pedido</h3>
+                    <button class="btn-close-modal" onclick="closeCheckoutModal()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div class="modal-body">
+                    <!-- Customer Summary Panel -->
+                    <div class="summary-card customer-summary">
+                        <h4>Datos de Retiro</h4>
+                        <p id="sum-name"><strong>Nombre:</strong> <span>-</span></p>
+                        <p id="sum-phone"><strong>WhatsApp:</strong> <span>-</span></p>
+                        <p id="sum-delivery"><strong>Modalidad:</strong> <span>Retiro en Local</span></p>
+                    </div>
+
+                    <!-- Selected Period Summary -->
+                    <div class="summary-period-badge">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span id="sum-period-text">Mes - Semana</span>
+                    </div>
+
+                    <!-- Items Breakdown List -->
+                    <div class="summary-items-list" id="summary-items-container">
+                        <!-- Dynamic items per day -->
+                    </div>
+
+                    <!-- Final Totals Card (No Delivery Fee) -->
+                    <div class="summary-card totals-card">
+                        <div class="total-row grand-total">
+                            <span>Total a Pagar</span>
+                            <span id="sum-grand-total">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- Legal & Warning Notice -->
+                    <div class="notice-box">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <p>Tu pago seguro se procesará vía Mercado Pago. Al confirmar, guardaremos tu reserva y te redirigiremos para que realices el pago.</p>
+                    </div>
+                </div>
+
+                <!-- Modal Action Footer -->
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeCheckoutModal()">Seguir Comprando</button>
+                    <button class="btn-primary" id="btn-confirm-order" onclick="submitOrder()">
+                        <i class="fa-solid fa-credit-card"></i> Confirmar y Pagar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing & Loading Overlay -->
+        <div class="status-overlay hidden" id="status-overlay">
+            <div class="status-card">
+                <!-- Loading State -->
+                <div class="status-state" id="state-loading">
+                    <div class="spinner"></div>
+                    <h3>Procesando tu pedido...</h3>
+                    <p>Estamos registrando tu reserva en nuestra base de datos y conectando con Mercado Pago. No cierres esta ventana.</p>
+                </div>
+
+                <!-- Success State -->
+                <div class="status-state hidden" id="state-success">
+                    <div class="status-icon success">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h3>¡Pedido Registrado!</h3>
+                    <p>Tu reserva ha sido guardada en nuestra planilla. Haz click en el botón de abajo para abonar con Mercado Pago y completar tu compra.</p>
+                    <a href="#" id="mp-payment-link" target="_blank" class="btn-payment-redirect">
+                        <i class="fa-solid fa-wallet"></i> Pagar con Mercado Pago
+                    </a>
+                    <button class="btn-whatsapp-confirm hidden" id="whatsapp-confirm-btn">
+                        <i class="fa-brands fa-whatsapp"></i> Notificar por WhatsApp
+                    </button>
+                    <button class="btn-text-only" onclick="resetAppAfterSuccess()">Hacer otro pedido</button>
+                </div>
+
+                <!-- Error State -->
+                <div class="status-state hidden" id="state-error">
+                    <div class="status-icon error">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                    <h3>Hubo un problema</h3>
+                    <p id="error-message-text">No pudimos conectar de forma automática con el servidor. No te preocupes, puedes enviarnos tu pedido directamente por WhatsApp para reservarlo manualmente.</p>
+                    <button class="btn-primary" onclick="hideStatusOverlay()">Reintentar</button>
+                    <button class="btn-whatsapp-fallback hidden" id="whatsapp-fallback-btn">
+                        <i class="fa-brands fa-whatsapp"></i> Enviar por WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
