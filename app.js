@@ -6,7 +6,7 @@
 // ----------------------------------------------------
 // CONFIGURACIÓN: Ingresa aquí tu URL de Google Apps Script Web App
 // ----------------------------------------------------
-const API_URL = "https://script.google.com/macros/s/AKfycbxUrEylW9DF3Z0r_zkavwssfAdzj1cqJsxdZLBPF0INqUfQhmdOLfMH3MKk2GnUtBmk1Q/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxUrEylW9DF3Z0r_zkavwssfAdzj1cqJsxdZLBPF0INqUfQhmdOLfMH3MKk2GnUtBmk1Q/exec";
 
 // ----------------------------------------------------
 // FERIADOS NACIONALES ARGENTINA 2026 (Fallback local)
