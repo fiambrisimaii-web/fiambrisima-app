@@ -6,7 +6,13 @@
 // ----------------------------------------------------
 // CONFIGURACIÓN: Ingresa aquí tu URL de Google Apps Script Web App
 // ----------------------------------------------------
-const API_URL = "https://script.google.com/macros/s/AKfycbxUrEylW9DF3Z0r_zkavwssfAdzj1cqJsxdZLBPF0INqUfQhmdOLfMH3MKk2GnUtBmk1Q/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxMAl61yiLAKxHaZc3jxRi5oCgTwYWml1Dwu5I7F2XJoM_LclDMztkIhtMMyw6T023mxQ/exec";
+
+// ----------------------------------------------------
+// DATOS DE PAGO POR WHATSAPP (sin Mercado Pago)
+// ----------------------------------------------------
+const PAYMENT_ALIAS   = "AUDAZ.ALPES.DANZA.MP";          // <--- alias que aparecerá en el mensaje
+const WHATSAPP_NUMBER = "5491123214343";   // <--- número con código de país (sin +)
 
 // ----------------------------------------------------
 // FERIADOS NACIONALES ARGENTINA 2026 (Fallback local)
@@ -710,7 +716,7 @@ function submitOrder() {
         })
         .then(data => {
             if (data.status === "success") {
-                handleOrderSuccess(orderId, data.paymentUrl, payload);
+                handleOrderSuccess(data.orderId, payload);
             } else {
                 throw new Error(data.message || "Error procesando el backend");
             }
@@ -722,31 +728,38 @@ function submitOrder() {
     }
 }
 
-function handleOrderSuccess(orderId, paymentUrl, payload) {
-    showState("success");
-    
-    const mpLink = document.getElementById("mp-payment-link");
-    mpLink.href = paymentUrl;
 
-    const wsBtn = document.getElementById("whatsapp-confirm-btn");
-    wsBtn.classList.remove("hidden");
-    wsBtn.onclick = () => {
-        sendOrderViaWhatsApp(payload, orderId, "Hola Fiambrisima II! Acabo de registrar mi pedido de viandas: ");
-    };
-
-    window.open(paymentUrl, "_blank");
-}
-
-function handleOrderError(errMsg, payload) {
-    showState("error");
-    document.getElementById("error-message-text").textContent = 
-        `No pudimos registrar tu pedido automáticamente en nuestra planilla por un error de conexión (${errMsg}). Por favor haz click abajo para enviárnoslo por WhatsApp y coordinar de forma manual.`;
-
-    const wsFallbackBtn = document.getElementById("whatsapp-fallback-btn");
-    wsFallbackBtn.classList.remove("hidden");
-    wsFallbackBtn.onclick = () => {
-        sendOrderViaWhatsApp(payload, "PENDIENTE", "Hola Fiambrisima II! Envío mi pedido de viandas manualmente: ");
-    };
+/**
+ * Muestra la pantalla de éxito con instrucciones de pago por WhatsApp.
+ */
+function handleOrderSuccess(orderId, payload) {
+  // 1️.Cambiar de estado a "success"
+  showState("success");
+  // 2️.Construir texto del mensaje
+  const mensaje = `
+    🎉 ¡Pedido generado con éxito!<br><br>
+    Para reservar tu pedido, envía el pago al alias <strong>${PAYMENT_ALIAS}</strong> 
+    vía WhatsApp al número <strong>${formatWhatsAppLink(WHATSAPP_NUMBER)}</strong>.<br><br>
+    <em>Importante:</em> sin el pago enviado por WhatsApp el pedido <strong>no queda reservado</strong>.<br><br>
+    <button id="whatsapp-btn" class="cta-btn">Abrir WhatsApp</button>
+  `;
+  // 3️.Colocar el mensaje en el contenedor de éxito
+  const successContainer = document.getElementById("state-success");
+  if (successContainer) {
+    successContainer.innerHTML = mensaje;
+  }
+  // 4️.Añadir listener al botón para abrir WA con texto pre‑llenado
+  const btn = document.getElementById("whatsapp-btn");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const texto = encodeURIComponent(
+        `Hola, quiero pagar el pedido ${orderId} (alias ${PAYMENT_ALIAS}).`
+      );
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${texto}`;
+      window.open(url, "_blank");
+    });
+  }
+  // Opcional: puedes guardar el orderId en algún lugar para futuro tracking
 }
 
 function sendOrderViaWhatsApp(payload, orderId, prefix) {
