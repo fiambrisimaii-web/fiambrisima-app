@@ -737,7 +737,7 @@ function handleOrderSuccess(orderId, payload) {
   // 1. Cambiar de estado a "success"
   showState("success");
   
-  // 2. Colocar el mensaje en el contenedor principal "state-success", pisando el código HTML viejo de Mercado Pago
+  // 2. Colocar el mensaje en el contenedor principal "state-success"
   const successContainer = document.getElementById("state-success");
   if (successContainer) {
     successContainer.innerHTML = `
@@ -773,16 +773,18 @@ function handleOrderSuccess(orderId, payload) {
       let resumenItems = "";
       if (payload && payload.items && payload.items.length > 0) {
         payload.items.forEach(item => {
-          resumenItems += `• ${item.cantidad}x ${item.nombre}\n`;
+          // Agregamos el día de la semana a cada ítem (ej: Lunes: 2x Tarta)
+          const dia = item.diaSemana ? item.diaSemana : "";
+          resumenItems += `• ${dia}: ${item.cantidad}x ${item.nombre}\n`;
         });
       }
       
       const totalText = payload && payload.totalGral ? payload.totalGral : "0";
-      // Mensaje final para WhatsApp con saltos de línea y negritas de WhatsApp (*)
-      const mensajeFinal = `Hola, envío el comprobante de mi pedido ${orderId} (Alias: ${PAYMENT_ALIAS}).\n\n*Resumen de mi pedido:*\n${resumenItems}\n*Total a abonar:* $${totalText}\n\nAdjunto el comprobante. ¡Gracias!`;
+      const semanaText = payload && payload.periodoSemana ? payload.periodoSemana : "Sin especificar";
+      // Mensaje final para WhatsApp con la Semana y los Días
+      const mensajeFinal = `Hola, envío el comprobante de mi pedido ${orderId} (Alias: ${PAYMENT_ALIAS}).\n\n*Semana seleccionada:* ${semanaText}\n*Resumen de mi pedido:*\n${resumenItems}\n*Total a abonar:* $${totalText}\n\nAdjunto el comprobante. ¡Gracias!`;
       // Codificamos el mensaje para que funcione en la URL
       const textoEncoded = encodeURIComponent(mensajeFinal);
-      // wa.me requiere el número en formato internacional sin +, ej: 5491123214343
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${textoEncoded}`;
       window.open(url, "_blank");
     };
