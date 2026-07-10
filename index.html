@@ -171,7 +171,7 @@
                     <!-- Legal & Warning Notice -->
                     <div class="notice-box">
                         <i class="fa-solid fa-shield-halved"></i>
-                        <p>Tu pago seguro se procesará vía Mercado Pago. Al confirmar, guardaremos tu reserva y te redirigiremos para que realices el pago.</p>
+                        <p>Al confirmar tu pedido, guardaremos tu reserva y te daremos las instrucciones para que realices el pago vía WhatsApp.</p>
                     </div>
                 </div>
 
@@ -179,7 +179,7 @@
                 <div class="modal-footer">
                     <button class="btn-secondary" onclick="closeCheckoutModal()">Seguir Comprando</button>
                     <button class="btn-primary" id="btn-confirm-order" onclick="submitOrder()">
-                        <i class="fa-solid fa-credit-card"></i> Confirmar y Pagar
+                        <i class="fa-solid fa-check"></i> Confirmar Pedido
                     </button>
                 </div>
             </div>
@@ -192,7 +192,7 @@
                 <div class="status-state" id="state-loading">
                     <div class="spinner"></div>
                     <h3>Procesando tu pedido...</h3>
-                    <p>Estamos registrando tu reserva en nuestra base de datos y conectando con Mercado Pago. No cierres esta ventana.</p>
+                    <p>Estamos registrando tu reserva en nuestra base de datos. No cierres esta ventana.</p>
                 </div>
 
                 <!-- Success State -->
@@ -201,12 +201,11 @@
                         <i class="fa-solid fa-circle-check"></i>
                     </div>
                     <h3>¡Pedido Registrado!</h3>
-                    <p>Tu reserva ha sido guardada en nuestra planilla. Haz click en el botón de abajo para abonar con Mercado Pago y completar tu compra.</p>
-                    <a href="#" id="mp-payment-link" target="_blank" class="btn-payment-redirect">
-                        <i class="fa-solid fa-wallet"></i> Pagar con Mercado Pago
-                    </a>
-                    <button class="btn-whatsapp-confirm hidden" id="whatsapp-confirm-btn">
-                        <i class="fa-brands fa-whatsapp"></i> Notificar por WhatsApp
+                    <div id="success-message-container">
+                        <p>Tu reserva ha sido guardada en nuestra planilla.</p>
+                    </div>
+                    <button class="btn-whatsapp-confirm" id="whatsapp-btn">
+                        <i class="fa-brands fa-whatsapp"></i> Enviar Pago por WhatsApp
                     </button>
                     <button class="btn-text-only" onclick="resetAppAfterSuccess()">Hacer otro pedido</button>
                 </div>

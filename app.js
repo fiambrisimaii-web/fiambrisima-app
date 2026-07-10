@@ -698,8 +698,9 @@ function submitOrder() {
     showState("loading");
 
     if (!API_URL || API_URL === "TU_URL_DE_GOOGLE_APPS_SCRIPT") {
+        // Simulación: directamente mostrar éxito sin redirección a MercadoPago
         setTimeout(() => {
-            handleOrderSuccess(orderId, "https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=mock_pref_fiambrisima", payload);
+            handleOrderSuccess(orderId, payload);
         }, 2000);
     } else {
         fetch(API_URL, {
@@ -733,33 +734,49 @@ function submitOrder() {
  * Muestra la pantalla de éxito con instrucciones de pago por WhatsApp.
  */
 function handleOrderSuccess(orderId, payload) {
-  // 1️.Cambiar de estado a "success"
+  // 1. Cambiar de estado a "success"
   showState("success");
-  // 2️.Construir texto del mensaje
-  const mensaje = `
-    🎉 ¡Pedido generado con éxito!<br><br>
-    Para reservar tu pedido, envía el pago al alias <strong>${PAYMENT_ALIAS}</strong> 
-    vía WhatsApp al número <strong>${formatWhatsAppLink(WHATSAPP_NUMBER)}</strong>.<br><br>
-    <em>Importante:</em> sin el pago enviado por WhatsApp el pedido <strong>no queda reservado</strong>.<br><br>
-    <button id="whatsapp-btn" class="cta-btn">Abrir WhatsApp</button>
-  `;
-  // 3️.Colocar el mensaje en el contenedor de éxito
+  
+  // 2. Colocar el mensaje en el contenedor principal "state-success", pisando el código HTML viejo de Mercado Pago
   const successContainer = document.getElementById("state-success");
   if (successContainer) {
-    successContainer.innerHTML = mensaje;
+    successContainer.innerHTML = `
+        <div class="status-icon success">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 style="margin-bottom: 15px;">¡Pedido Registrado!</h3>
+        
+        <p style="margin-bottom: 10px;">Tu reserva ha sido guardada en nuestro sistema...</p>
+        
+        <p style="margin-bottom: 10px;">No te olvides de realizar tu pago al siguiente Alias:<br>
+        <strong style="font-size: 1.1em; color: var(--primary);">${PAYMENT_ALIAS}</strong></p>
+        
+        <p style="margin-bottom: 10px;">Y de enviar el comprobante de pago al WhatsApp:<br>
+        <strong>${WHATSAPP_NUMBER}</strong></p>
+        
+        <p style="margin-bottom: 20px; font-size: 0.9em; background-color: #fff3cd; padding: 10px; border-radius: 5px; color: #856404;">
+        <em>Importante: sin el pago OK y el comprobante enviado por Whatsapp no se considerará terminado el pedido.</em>
+        </p>
+        
+        <button class="btn-primary" id="btn-dynamic-wa" style="background-color: #25D366; width: 100%; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <i class="fa-brands fa-whatsapp"></i> Enviar Comprobante
+        </button>
+        <button class="btn-text-only" onclick="resetAppAfterSuccess()">Hacer otro pedido</button>
+    `;
   }
-  // 4️.Añadir listener al botón para abrir WA con texto pre‑llenado
-  const btn = document.getElementById("whatsapp-btn");
+  
+  // 3. Añadir listener al nuevo botón para abrir WA con texto pre-llenado
+  const btn = document.getElementById("btn-dynamic-wa");
   if (btn) {
-    btn.addEventListener("click", () => {
+    btn.onclick = () => {
       const texto = encodeURIComponent(
-        `Hola, quiero pagar el pedido ${orderId} (alias ${PAYMENT_ALIAS}).`
+        `Hola, quiero enviar el comprobante de mi pedido ${orderId} (Alias: ${PAYMENT_ALIAS}).`
       );
+      // wa.me requiere el número en formato internacional sin +, ej: 5491123214343
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${texto}`;
       window.open(url, "_blank");
-    });
+    };
   }
-  // Opcional: puedes guardar el orderId en algún lugar para futuro tracking
 }
 
 function sendOrderViaWhatsApp(payload, orderId, prefix) {
