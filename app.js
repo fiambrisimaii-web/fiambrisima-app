@@ -773,16 +773,25 @@ function handleOrderSuccess(orderId, payload) {
       let resumenItems = "";
       if (payload && payload.items && payload.items.length > 0) {
         payload.items.forEach(item => {
-          // Agregamos el día de la semana a cada ítem (ej: Lunes: 2x Tarta)
-          const dia = item.diaSemana ? item.diaSemana : "";
-          resumenItems += `• ${dia}: ${item.cantidad}x ${item.nombre}\n`;
+          // Formateamos la fecha para que quede como "Jueves 13/08"
+          let fechaFormateada = "";
+          if (item.fechaEntrega) {
+             const partes = item.fechaEntrega.split("-"); // divide "2026-08-13"
+             if (partes.length === 3) {
+                 const diaNombre = item.diaSemana ? item.diaSemana : "";
+                 // partes[2] es el día, partes[1] es el mes
+                 fechaFormateada = `${diaNombre} ${partes[2]}/${partes[1]}`;
+             }
+          }
+          
+          resumenItems += `• ${fechaFormateada} - ${item.cantidad}x ${item.nombre}\n`;
         });
       }
       
       const totalText = payload && payload.totalGral ? payload.totalGral : "0";
       const semanaText = payload && payload.periodoSemana ? payload.periodoSemana : "Sin especificar";
-      // Mensaje final para WhatsApp con la Semana y los Días
-      const mensajeFinal = `Hola, envío el comprobante de mi pedido ${orderId} (Alias: ${PAYMENT_ALIAS}).\n\n*Semana seleccionada:* ${semanaText}\n*Resumen de mi pedido:*\n${resumenItems}\n*Total a abonar:* $${totalText}\n\nAdjunto el comprobante. ¡Gracias!`;
+      // Mensaje final para WhatsApp con la Semana, los Días y las Fechas
+      const mensajeFinal = `Hola, envío el comprobante de mi pedido ${orderId} (Alias: ${PAYMENT_ALIAS}).\n\n*Semana:* ${semanaText}\n*Resumen de mi pedido:*\n${resumenItems}\n*Total a abonar:* $${totalText}\n\nAdjunto el comprobante. ¡Gracias!`;
       // Codificamos el mensaje para que funcione en la URL
       const textoEncoded = encodeURIComponent(mensajeFinal);
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${textoEncoded}`;
