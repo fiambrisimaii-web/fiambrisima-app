@@ -759,7 +759,7 @@ function handleOrderSuccess(orderId, payload) {
         </p>
         
         <button class="btn-primary" id="btn-dynamic-wa" style="background-color: #25D366; width: 100%; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-            <i class="fa-brands fa-whatsapp"></i> Enviar Comprobante
+            <i class="fa-brands fa-whatsapp"></i> Enviar Comprobante y Resumen
         </button>
         <button class="btn-text-only" onclick="resetAppAfterSuccess()">Hacer otro pedido</button>
     `;
@@ -769,11 +769,21 @@ function handleOrderSuccess(orderId, payload) {
   const btn = document.getElementById("btn-dynamic-wa");
   if (btn) {
     btn.onclick = () => {
-      const texto = encodeURIComponent(
-        `Hola, quiero enviar el comprobante de mi pedido ${orderId} (Alias: ${PAYMENT_ALIAS}).`
-      );
+      // Armamos el resumen del pedido a partir de los datos que guardamos
+      let resumenItems = "";
+      if (payload && payload.items && payload.items.length > 0) {
+        payload.items.forEach(item => {
+          resumenItems += `• ${item.cantidad}x ${item.nombre}\n`;
+        });
+      }
+      
+      const totalText = payload && payload.totalGral ? payload.totalGral : "0";
+      // Mensaje final para WhatsApp con saltos de línea y negritas de WhatsApp (*)
+      const mensajeFinal = `Hola, envío el comprobante de mi pedido ${orderId} (Alias: ${PAYMENT_ALIAS}).\n\n*Resumen de mi pedido:*\n${resumenItems}\n*Total a abonar:* $${totalText}\n\nAdjunto el comprobante. ¡Gracias!`;
+      // Codificamos el mensaje para que funcione en la URL
+      const textoEncoded = encodeURIComponent(mensajeFinal);
       // wa.me requiere el número en formato internacional sin +, ej: 5491123214343
-      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${texto}`;
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${textoEncoded}`;
       window.open(url, "_blank");
     };
   }
