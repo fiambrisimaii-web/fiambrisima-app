@@ -789,9 +789,8 @@ function handleOrderSuccess(orderId, payload) {
       }
       
       const totalText = payload && payload.totalGral ? payload.totalGral : "0";
-      const semanaText = payload && payload.periodoSemana ? payload.periodoSemana : "Sin especificar";
-      // Mensaje final para WhatsApp con la Semana, los Días y las Fechas
-      const mensajeFinal = `Hola, envío el comprobante de mi pedido ${orderId} (Alias: ${PAYMENT_ALIAS}).\n\n*Semana:* ${semanaText}\n*Resumen de mi pedido:*\n${resumenItems}\n*Total a abonar:* $${totalText}\n\nAdjunto el comprobante. ¡Gracias!`;
+      // Mensaje final para WhatsApp sin la Semana y sin el Alias
+      const mensajeFinal = `Hola, envío el comprobante de mi pedido ${orderId}.\n\n*Resumen de mi pedido:*\n${resumenItems}\n*Total a abonar:* $${totalText}\n\nAdjunto el comprobante. ¡Gracias!`;
       // Codificamos el mensaje para que funcione en la URL
       const textoEncoded = encodeURIComponent(mensajeFinal);
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${textoEncoded}`;
