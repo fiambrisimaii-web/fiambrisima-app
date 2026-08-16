@@ -1,19 +1,19 @@
-javascript
-
-
 /**
  * Fiambrisima II - Frontend Logic
  * Works in Mock/Simulation mode by default. Connect to Google Sheets by setting API_URL below.
  */
+
 // ----------------------------------------------------
 // CONFIGURACIÓN: Ingresa aquí tu URL de Google Apps Script Web App
 // ----------------------------------------------------
 const API_URL = "https://script.google.com/macros/s/AKfycbxMAl61yiLAKxHaZc3jxRi5oCgTwYWml1Dwu5I7F2XJoM_LclDMztkIhtMMyw6T023mxQ/exec";
+
 // ----------------------------------------------------
 // DATOS DE PAGO POR WHATSAPP (sin Mercado Pago)
 // ----------------------------------------------------
 const PAYMENT_ALIAS   = "AUDAZ.ALPES.DANZA.MP";          // <--- alias que aparecerá en el mensaje
 const WHATSAPP_NUMBER = "5491123214343";   // <--- número con código de país (sin +)
+
 // ----------------------------------------------------
 // FERIADOS NACIONALES ARGENTINA 2026 (Fallback local)
 // ----------------------------------------------------
@@ -37,8 +37,10 @@ const ARG_HOLIDAYS_2026 = [
     "2026-12-08", // Inmaculada Concepción
     "2026-12-25"  // Navidad
 ];
+
 // Feriados dinámicos leídos desde Google Sheets
 let sheetHolidays = [];
+
 // ----------------------------------------------------
 // CARTA OFICIAL DE FIAMBRISIMA II (Exactamente 19 Platos)
 // ----------------------------------------------------
@@ -72,6 +74,7 @@ const LOCAL_MENU = [
     // ENSALADAS
     { id: 19, name: "Ensalada a Elección", category: "ensaladas", price: 3300, desc: "Arma tu ensalada eligiendo tus ingredientes favoritos.", tags: "Personalizada" }
 ];
+
 // Categorías del Menú
 const CATEGORIES = [
     { id: "todos", name: "Todos" },
@@ -81,6 +84,7 @@ const CATEGORIES = [
     { id: "sándwiches", name: "Sándwiches" },
     { id: "ensaladas", name: "Ensaladas" }
 ];
+
 // Días de preparación (LUNES A VIERNES únicamente)
 const DAYS_OF_WEEK = [
     { id: "lunes", name: "Lunes", offset: 0 },
@@ -89,6 +93,7 @@ const DAYS_OF_WEEK = [
     { id: "jueves", name: "Jueves", offset: 3 },
     { id: "viernes", name: "Viernes", offset: 4 }
 ];
+
 // ----------------------------------------------------
 // ESTADO DE LA APLICACIÓN
 // ----------------------------------------------------
@@ -98,8 +103,10 @@ let activeDayId = "lunes";
 let currentWeeks = []; 
 const deliveryMethod = "pickup"; // Hardcoded: Solo retiro en local
 const deliveryFee = 0;          // Costo de envío: $0 pesos
+
 // Estructura del Carrito: { "YYYY-MM-DD": { platoId: cantidad } }
 let cart = {};
+
 // Datos del Cliente y Período seleccionado
 let orderMetadata = {
     clientName: "",
@@ -110,6 +117,7 @@ let orderMetadata = {
     selectedWeekIndex: 0,
     weekStartDate: null, 
 };
+
 // ----------------------------------------------------
 // INICIALIZACIÓN
 // ----------------------------------------------------
@@ -119,6 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupEventListeners();
     fetchMenu(); // Carga desde Sheets si está configurado
 });
+
 // ----------------------------------------------------
 // LÓGICA DE CALENDARIO Y FECHAS
 // ----------------------------------------------------
@@ -129,10 +138,12 @@ function initCalendarSelectors() {
     const now = new Date();
     const currentMonthIndex = now.getMonth();
     const currentYear = now.getFullYear();
+
     const monthNames = [
         "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     ];
+
     monthSelect.innerHTML = "";
     for (let i = 0; i < 3; i++) {
         let m = (currentMonthIndex + i) % 12;
@@ -143,31 +154,38 @@ function initCalendarSelectors() {
         option.textContent = `${monthNames[m]} ${y}`;
         monthSelect.appendChild(option);
     }
+
     monthSelect.addEventListener("change", () => {
         const [year, monthIdx] = monthSelect.value.split("-").map(Number);
         updateWeekSelector(year, monthIdx);
     });
+
     const [year, monthIdx] = monthSelect.value.split("-").map(Number);
     updateWeekSelector(year, monthIdx);
+
     weekSelect.addEventListener("change", () => {
         selectWeek(Number(weekSelect.value));
     });
 }
+
 function updateWeekSelector(year, monthIndex) {
     const weekSelect = document.getElementById("select-week");
     weekSelect.innerHTML = "";
+
     const weeks = [];
     let date = new Date(year, monthIndex, 1);
     
     const day = date.getDay();
     const diffToMonday = date.getDate() - day + (day === 0 ? -6 : 1);
     let currentMonday = new Date(year, monthIndex, diffToMonday);
+
     for (let w = 0; w < 6; w++) {
         let mon = new Date(currentMonday);
         mon.setDate(currentMonday.getDate() + (w * 7));
         
         let fri = new Date(mon);
         fri.setDate(mon.getDate() + 4); 
+
         if (mon.getMonth() === monthIndex || fri.getMonth() === monthIndex) {
             weeks.push({
                 monday: mon,
@@ -176,15 +194,19 @@ function updateWeekSelector(year, monthIndex) {
             });
         }
     }
+
     currentWeeks = weeks;
+
     weeks.forEach((wk, idx) => {
         const option = document.createElement("option");
         option.value = idx;
         option.textContent = wk.label;
         weekSelect.appendChild(option);
     });
+
     selectWeek(0);
 }
+
 function selectWeek(weekIdx) {
     if (currentWeeks.length === 0) return;
     const week = currentWeeks[weekIdx];
@@ -192,22 +214,30 @@ function selectWeek(weekIdx) {
     orderMetadata.selectedWeekIndex = weekIdx;
     orderMetadata.selectedWeekLabel = week.label;
     orderMetadata.weekStartDate = week.monday;
+
     const monthSelect = document.getElementById("select-month");
     orderMetadata.selectedMonth = monthSelect.options[monthSelect.selectedIndex].text;
+
     document.getElementById("week-range-text").textContent = 
         `Viendo viandas para el período: ${week.label} (${orderMetadata.selectedMonth})`;
+
     activeDayId = "lunes";
+
     renderDayTabs();
     renderMenuItems();
 }
+
 function renderDayTabs() {
     const tabsContainer = document.getElementById("day-tabs-container");
     tabsContainer.innerHTML = "";
+
     DAYS_OF_WEEK.forEach(day => {
         const dayDate = new Date(orderMetadata.weekStartDate);
         dayDate.setDate(orderMetadata.weekStartDate.getDate() + day.offset);
+
         const lockState = checkIsDayLocked(dayDate); 
         const countInDay = getCartCountForDate(formatDateISO(dayDate));
+
         const tab = document.createElement("div");
         tab.className = `day-tab ${day.id === activeDayId ? "active" : ""}`;
         
@@ -216,6 +246,7 @@ function renderDayTabs() {
         } else if (lockState === "past") {
             tab.classList.add("locked");
         }
+
         tab.setAttribute("data-day-id", day.id);
         tab.setAttribute("data-date-iso", formatDateISO(dayDate));
         
@@ -224,15 +255,18 @@ function renderDayTabs() {
             <span class="tab-date">${formatDateShort(dayDate)}</span>
             ${countInDay > 0 ? `<span class="day-tab-badge">${countInDay}</span>` : ""}
         `;
+
         tab.addEventListener("click", () => {
             activeDayId = day.id;
             document.querySelectorAll(".day-tab").forEach(t => t.classList.remove("active"));
             tab.classList.add("active");
             renderMenuItems();
         });
+
         tabsContainer.appendChild(tab);
     });
 }
+
 function checkIsDayLocked(targetDate) {
     const dateISO = formatDateISO(targetDate);
     
@@ -240,6 +274,7 @@ function checkIsDayLocked(targetDate) {
     if (ARG_HOLIDAYS_2026.includes(dateISO) || sheetHolidays.includes(dateISO)) {
         return "holiday";
     }
+
     // B. Comprobar Límite del día anterior (23:59)
     const now = new Date();
     const targetMidnight = new Date(
@@ -248,18 +283,21 @@ function checkIsDayLocked(targetDate) {
         targetDate.getDate(),
         0, 0, 0, 0
     );
+
     if (now >= targetMidnight) {
         return "past";
     }
     
     return false;
 }
+
 // ----------------------------------------------------
 // NAVEGACIÓN Y FILTROS DEL MENÚ
 // ----------------------------------------------------
 function initCategoryPills() {
     const container = document.getElementById("category-pills-container");
     container.innerHTML = "";
+
     CATEGORIES.forEach(cat => {
         const pill = document.createElement("button");
         pill.className = `category-pill ${cat.id === activeCategory ? "active" : ""}`;
@@ -273,13 +311,16 @@ function initCategoryPills() {
         container.appendChild(pill);
     });
 }
+
 function renderMenuItems() {
     const grid = document.getElementById("menu-items-grid");
     grid.innerHTML = "";
+
     const activeDayObj = DAYS_OF_WEEK.find(d => d.id === activeDayId);
     const dayDate = new Date(orderMetadata.weekStartDate);
     dayDate.setDate(orderMetadata.weekStartDate.getDate() + activeDayObj.offset);
     const dateISO = formatDateISO(dayDate);
+
     const lockState = checkIsDayLocked(dayDate);
     const banner = document.getElementById("day-lock-banner");
     const bannerTitle = document.getElementById("lock-banner-title");
@@ -300,13 +341,16 @@ function renderMenuItems() {
         banner.classList.add("hidden");
         grid.classList.remove("locked-day");
     }
+
     const searchQuery = document.getElementById("search-input").value.toLowerCase().trim();
+
     const filteredMenu = menuData.filter(item => {
         const matchesCategory = activeCategory === "todos" || item.category === activeCategory;
         const matchesSearch = item.name.toLowerCase().includes(searchQuery) || 
                               item.desc.toLowerCase().includes(searchQuery);
         return matchesCategory && matchesSearch;
     });
+
     if (filteredMenu.length === 0) {
         grid.innerHTML = `
             <div class="info-banner" style="grid-column: 1/-1; background-color: rgba(20,54,39,0.04); color: var(--accent); border-color: var(--border-color)">
@@ -316,6 +360,7 @@ function renderMenuItems() {
         `;
         return;
     }
+
     filteredMenu.forEach(item => {
         let qty = 0;
         let cardHtml = "";
@@ -378,12 +423,14 @@ function renderMenuItems() {
                 </div>
             `;
         }
+
         const card = document.createElement("div");
         card.className = `menu-card ${qty > 0 ? "in-cart" : ""}`;
         card.innerHTML = cardHtml;
         grid.appendChild(card);
     });
 }
+
 /**
  * Retorna la clave única del carrito para la ensalada en base a los checkboxes marcados
  */
@@ -392,6 +439,7 @@ function getSaladKey() {
     if (checkedIngs.length === 0) return "19_Sin ingredientes";
     return "19_" + checkedIngs.join("_");
 }
+
 /**
  * Escucha los cambios de ingredientes en la ensalada y actualiza el contador del carrito en tiempo real
  */
@@ -410,6 +458,7 @@ function onSaladCheckboxChange(dateISO) {
         }
     }
 }
+
 // ----------------------------------------------------
 // GESTIÓN DEL CARRITO
 // ----------------------------------------------------
@@ -419,17 +468,21 @@ function adjustQuantity(dateISO, platoId, delta) {
         alert("Pedidos cerrados para esta fecha.");
         return;
     }
+
     if (!cart[dateISO]) {
         cart[dateISO] = {};
     }
+
     // Si es ensalada, resolvemos la clave única en base a ingredientes
     let cartKey = platoId;
     if (platoId === 19) {
         cartKey = getSaladKey();
     }
+
     const currentQty = cart[dateISO][cartKey] || 0;
     let newQty = currentQty + delta;
     if (newQty < 0) newQty = 0;
+
     if (newQty === 0) {
         delete cart[dateISO][cartKey];
         if (Object.keys(cart[dateISO]).length === 0) {
@@ -438,6 +491,7 @@ function adjustQuantity(dateISO, platoId, delta) {
     } else {
         cart[dateISO][cartKey] = newQty;
     }
+
     const qtyLabel = document.getElementById(`qty-${dateISO}-${platoId}`);
     if (qtyLabel) {
         qtyLabel.textContent = newQty;
@@ -448,22 +502,27 @@ function adjustQuantity(dateISO, platoId, delta) {
             card.classList.remove("in-cart");
         }
     }
+
     renderDayTabs();
     updateFloatingCartBar();
 }
+
 function getCartItemQuantity(dateISO, platoId) {
     if (cart[dateISO] && cart[dateISO][platoId]) {
         return cart[dateISO][platoId];
     }
     return 0;
 }
+
 function getCartCountForDate(dateISO) {
     if (!cart[dateISO]) return 0;
     return Object.values(cart[dateISO]).reduce((sum, q) => sum + q, 0);
 }
+
 function getCartTotals() {
     let totalItems = 0;
     let totalPrice = 0;
+
     Object.keys(cart).forEach(dateISO => {
         Object.keys(cart[dateISO]).forEach(cartKey => {
             const qty = cart[dateISO][cartKey];
@@ -481,11 +540,14 @@ function getCartTotals() {
             }
         });
     });
+
     return { totalItems, totalPrice };
 }
+
 function updateFloatingCartBar() {
     const floatingBar = document.getElementById("cart-floating-bar");
     const { totalItems, totalPrice } = getCartTotals();
+
     if (totalItems > 0) {
         floatingBar.classList.remove("hidden");
         document.getElementById("cart-total-badge").textContent = totalItems;
@@ -494,26 +556,33 @@ function updateFloatingCartBar() {
         floatingBar.classList.add("hidden");
     }
 }
+
 // ----------------------------------------------------
 // MODAL DE CHECKOUT Y DETALLE DE COMPRA
 // ----------------------------------------------------
 function openCheckoutModal() {
     const name = document.getElementById("client-name").value.trim();
     const phone = document.getElementById("client-phone").value.trim();
+
     if (!name || !phone) {
         alert("Por favor, completa tu Nombre y Teléfono antes de continuar.");
         document.getElementById("customer-card").scrollIntoView({ behavior: "smooth" });
         return;
     }
+
     orderMetadata.clientName = name;
     orderMetadata.clientPhone = phone;
+
     document.getElementById("sum-name").querySelector("span").textContent = orderMetadata.clientName;
     document.getElementById("sum-phone").querySelector("span").textContent = orderMetadata.clientPhone;
     document.getElementById("sum-period-text").textContent = 
         `${orderMetadata.selectedMonth} - ${orderMetadata.selectedWeekLabel}`;
+
     const itemsContainer = document.getElementById("summary-items-container");
     itemsContainer.innerHTML = "";
+
     const sortedDates = Object.keys(cart).sort();
+
     sortedDates.forEach(dateISO => {
         const dateObj = new Date(dateISO + "T00:00:00");
         const dayName = getDayNameFromDate(dateObj);
@@ -549,6 +618,7 @@ function openCheckoutModal() {
                 `;
             }
         });
+
         dayGroup.innerHTML = `
             <div class="summary-day-header">
                 <span>${dayName}</span>
@@ -560,19 +630,24 @@ function openCheckoutModal() {
         `;
         itemsContainer.appendChild(dayGroup);
     });
+
     const { totalPrice } = getCartTotals();
     document.getElementById("sum-grand-total").textContent = `$${totalPrice}`;
+
     document.getElementById("checkout-modal").classList.remove("hidden");
 }
+
 function closeCheckoutModal() {
     document.getElementById("checkout-modal").classList.add("hidden");
 }
+
 // ----------------------------------------------------
 // ENVÍO DE PEDIDOS (API / SIMULACIÓN)
 // ----------------------------------------------------
 function submitOrder() {
     const orderId = "PED-" + Math.floor(100000 + Math.random() * 900000);
     const { totalPrice } = getCartTotals();
+
     const itemsBreakdown = [];
     Object.keys(cart).forEach(dateISO => {
         Object.keys(cart[dateISO]).forEach(cartKey => {
@@ -607,6 +682,7 @@ function submitOrder() {
             }
         });
     });
+
     const payload = {
         orderId: orderId,
         fechaPedido: formatDateISO(new Date()),
@@ -620,9 +696,11 @@ function submitOrder() {
         costoEnvio: 0,
         totalGral: totalPrice
     };
+
     closeCheckoutModal();
     showStatusOverlay();
     showState("loading");
+
     if (!API_URL || API_URL === "TU_URL_DE_GOOGLE_APPS_SCRIPT") {
         // Simulación: directamente mostrar éxito sin redirección a MercadoPago
         setTimeout(() => {
@@ -658,6 +736,8 @@ function submitOrder() {
         });
     }
 }
+
+
 /**
  * Muestra la pantalla de éxito con instrucciones de pago por WhatsApp.
  */
@@ -717,8 +797,10 @@ function handleOrderSuccess(orderId, payload) {
       }
       
       const totalText = payload && payload.totalGral ? payload.totalGral : "0";
+
       // Mensaje final para WhatsApp sin la Semana y sin el Alias
       const mensajeFinal = `Hola, envío el comprobante de mi pedido ${orderId}.\n\n*Resumen de mi pedido:*\n${resumenItems}\n*Total a abonar:* $${totalText}\n\nAdjunto el comprobante. ¡Gracias!`;
+
       // Codificamos el mensaje para que funcione en la URL
       const textoEncoded = encodeURIComponent(mensajeFinal);
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${textoEncoded}`;
@@ -726,6 +808,7 @@ function handleOrderSuccess(orderId, payload) {
     };
   }
 }
+
 function sendOrderViaWhatsApp(payload, orderId, prefix) {
     const businessPhone = "5491112345678"; // Reemplazar con el WhatsApp real del local
     
@@ -736,6 +819,7 @@ function sendOrderViaWhatsApp(payload, orderId, prefix) {
     text += `*Modalidad:* Retiro en Local (Take Away)\n`;
     text += `*Período:* ${payload.periodoMes} - ${payload.periodoSemana}\n\n`;
     text += `*DETALLE DE LAS VIANDAS:*\n`;
+
     const groupedItems = {};
     payload.items.forEach(it => {
         if (!groupedItems[it.fechaEntrega]) {
@@ -743,6 +827,7 @@ function sendOrderViaWhatsApp(payload, orderId, prefix) {
         }
         groupedItems[it.fechaEntrega].list.push(it);
     });
+
     Object.keys(groupedItems).sort().forEach(dateISO => {
         const group = groupedItems[dateISO];
         const dateObj = new Date(dateISO + "T00:00:00");
@@ -751,23 +836,30 @@ function sendOrderViaWhatsApp(payload, orderId, prefix) {
             text += `  • ${item.cantidad}x ${item.nombre} ($${item.precioUnitario * item.cantidad})\n`;
         });
     });
+
     text += `\n*TOTAL A PAGAR:* $${payload.totalGral}\n`;
+
     const encodedText = encodeURIComponent(text);
     const whatsappUrl = `https://wa.me/${businessPhone}?text=${encodedText}`;
     window.open(whatsappUrl, "_blank");
 }
+
 function showStatusOverlay() {
     document.getElementById("status-overlay").classList.remove("hidden");
 }
+
 function hideStatusOverlay() {
     document.getElementById("status-overlay").classList.add("hidden");
 }
+
 function showState(stateId) {
     document.getElementById("state-loading").classList.add("hidden");
     document.getElementById("state-success").classList.add("hidden");
     document.getElementById("state-error").classList.add("hidden");
+
     document.getElementById(`state-${stateId}`).classList.remove("hidden");
 }
+
 function resetAppAfterSuccess() {
     cart = {};
     updateFloatingCartBar();
@@ -775,11 +867,13 @@ function resetAppAfterSuccess() {
     renderMenuItems();
     hideStatusOverlay();
 }
+
 function fetchMenu() {
     if (!API_URL || API_URL === "TU_URL_DE_GOOGLE_APPS_SCRIPT") {
         console.log("Corriendo en modo simulación (Mock). Menú local cargado.");
         return;
     }
+
     const fetchUrl = API_URL + (API_URL.includes("?") ? "&" : "?") + "_t=" + Date.now();
     fetch(fetchUrl, { cache: "no-store" })
         .then(res => res.json())
@@ -818,9 +912,11 @@ function fetchMenu() {
             console.error("Error cargando base de datos remota, usando fallback local:", err);
         });
 }
+
 function setupEventListeners() {
     const searchInput = document.getElementById("search-input");
     const clearBtn = document.getElementById("clear-search-btn");
+
     searchInput.addEventListener("input", () => {
         if (searchInput.value.trim().length > 0) {
             clearBtn.classList.remove("hidden");
@@ -829,12 +925,14 @@ function setupEventListeners() {
         }
         renderMenuItems();
     });
+
     clearBtn.addEventListener("click", () => {
         searchInput.value = "";
         clearBtn.classList.add("hidden");
         renderMenuItems();
     });
 }
+
 // ----------------------------------------------------
 // FUNCIONES AUXILIARES DE FECHAS
 // ----------------------------------------------------
@@ -844,11 +942,13 @@ function formatDateISO(date) {
     const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
 }
+
 function formatDateShort(date) {
     const d = String(date.getDate()).padStart(2, "0");
     const m = String(date.getMonth() + 1).padStart(2, "0");
     return `${d}/${m}`;
 }
+
 function getDayNameFromDate(date) {
     const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     return days[date.getDay()];
